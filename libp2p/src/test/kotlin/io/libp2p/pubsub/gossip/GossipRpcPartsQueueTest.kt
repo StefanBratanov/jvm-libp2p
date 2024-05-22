@@ -1,7 +1,6 @@
 package io.libp2p.pubsub.gossip
 
 import io.libp2p.core.PeerId
-import io.libp2p.etc.types.WBytes
 import io.libp2p.etc.types.toProtobuf
 import io.libp2p.etc.types.toWBytes
 import io.libp2p.pubsub.Topic
@@ -276,8 +275,8 @@ class GossipRpcPartsQueueTest {
         val serialized = res.toByteArray()
         val deserializedRpc = Rpc.RPC.parseFrom(serialized)
         assertThat(deserializedRpc.control.ihaveList).containsExactlyInAnyOrder(
-                Rpc.ControlIHave.newBuilder().setTopicID(topic1).addMessageIDs(messageId1.toProtobuf()).build(),
-                Rpc.ControlIHave.newBuilder().setTopicID(topic2).addMessageIDs(messageId2.toProtobuf()).build(),
+            Rpc.ControlIHave.newBuilder().setTopicID(topic1).addMessageIDs(messageId1.toProtobuf()).build(),
+            Rpc.ControlIHave.newBuilder().setTopicID(topic2).addMessageIDs(messageId2.toProtobuf()).build(),
         )
     }
 
@@ -296,10 +295,12 @@ class GossipRpcPartsQueueTest {
         assertThat(deserializedRpc.control.ihaveList).containsExactlyInAnyOrder(
             Rpc.ControlIHave.newBuilder()
                 .setTopicID("topic1")
-                .addAllMessageIDs(listOf(
-                    "1111".toWBytes().toProtobuf(),
-                    "3333".toWBytes().toProtobuf()
-                )).build(),
+                .addAllMessageIDs(
+                    listOf(
+                        "1111".toWBytes().toProtobuf(),
+                        "3333".toWBytes().toProtobuf()
+                    )
+                ).build(),
             Rpc.ControlIHave.newBuilder()
                 .setTopicID("topic2")
                 .addMessageIDs("2222".toWBytes().toProtobuf()).build(),
