@@ -2,10 +2,8 @@ package io.libp2p.transport.quic
 
 import io.libp2p.core.*
 import io.libp2p.core.crypto.PrivKey
-import io.libp2p.core.crypto.unmarshalPublicKey
 import io.libp2p.core.multiformats.Multiaddr
 import io.libp2p.core.multiformats.MultiaddrDns
-import io.libp2p.core.multiformats.Multihash
 import io.libp2p.core.multiformats.Protocol.*
 import io.libp2p.core.multistream.MultistreamProtocol
 import io.libp2p.core.multistream.MultistreamProtocolV1
@@ -22,8 +20,7 @@ import io.libp2p.etc.util.netty.nettyInitializer
 import io.libp2p.security.tls.Libp2pTrustManager
 import io.libp2p.security.tls.buildCert
 import io.libp2p.security.tls.getJavaKey
-import io.libp2p.security.tls.getPublicKeyFromCert
-import io.libp2p.security.tls.verifyAndExtractPeerId
+import io.libp2p.security.tls.verifyAndExtractHostPublicKey
 import io.libp2p.transport.implementation.ConnectionOverNetty
 import io.libp2p.transport.implementation.NettyTransport
 import io.netty.bootstrap.Bootstrap
@@ -219,17 +216,14 @@ class QuicTransport(
 
                 connection.setMuxerSession(QuicMuxerSession(it, connection))
 
-                val pubHash = Multihash.of(addr.getPeerId()!!.bytes.toByteBuf())
-                val remotePubKey = if (pubHash.desc.digest == Multihash.Digest.Identity) {
-                    unmarshalPublicKey(pubHash.bytes.toByteArray())
-                } else {
-                    getPublicKeyFromCert(arrayOf(trustManager.remoteCert!!))
-                }
+                val remotePublicKey = verifyAndExtractHostPublicKey(arrayOf(trustManager.remoteCert!!))
+                val remotePeerId = PeerId.fromPubKey(remotePublicKey)
+
                 connection.setSecureSession(
                     SecureChannel.Session(
                         PeerId.fromPubKey(localKey.publicKey()),
-                        addr.getPeerId()!!,
-                        remotePubKey,
+                        remotePeerId,
+                        remotePublicKey,
                         null
                     )
                 )
@@ -322,8 +316,8 @@ class QuicTransport(
                                 // Now the handshake is complete and remoteCert should be available
                                 val remoteCert = trustManager.remoteCert
                                 if (remoteCert != null) {
-                                    val remotePeerId = verifyAndExtractPeerId(arrayOf(remoteCert))
-                                    val remotePublicKey = getPublicKeyFromCert(arrayOf(remoteCert))
+                                    val remotePublicKey = verifyAndExtractHostPublicKey(arrayOf(remoteCert))
+                                    val remotePeerId = PeerId.fromPubKey(remotePublicKey)
 
                                     logger.info("Handshake completed with remote peer id: {}", remotePeerId)
 
