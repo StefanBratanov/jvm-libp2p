@@ -278,7 +278,10 @@ fun getContentVerifier(bcX509Cert: X509CertificateHolder): ContentVerifierProvid
     return BcECContentVerifierProviderBuilder(DefaultDigestAlgorithmIdentifierFinder()).build(bcX509Cert)
 }
 
-fun verifyAndExtractPeerId(chain: Array<Certificate>): PeerId {
+fun verifyAndExtractPeerId(chain: Array<Certificate>): PeerId =
+    PeerId.fromPubKey(verifyAndExtractHostPublicKey(chain))
+
+fun verifyAndExtractHostPublicKey(chain: Array<Certificate>): PubKey {
     if (chain.size != 1) {
         throw java.lang.IllegalStateException("Cert chain must have exactly 1 element!")
     }
@@ -314,7 +317,7 @@ fun verifyAndExtractPeerId(chain: Array<Certificate>): PeerId {
     if (bcCert.startDate.date.after(now)) {
         throw IllegalStateException("TLS certificate is not valid yet!")
     }
-    return PeerId.fromPubKey(pubKey)
+    return pubKey
 }
 
 fun getAlgorithmName(oid: String): String {
